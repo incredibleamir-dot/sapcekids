@@ -1,0 +1,1 @@
+"""Space Kids astro package."""

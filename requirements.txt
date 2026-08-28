@@ -1,0 +1,9 @@
+# Space Kids - run:  python3.13 main.py
+# Note: on Python 3.11+ pip resolves poliastro 0.7.0 (the newest release whose
+# metadata and python-requires resolve cleanly on modern interpreters).
+PySide6>=6.6
+poliastro>=0.7
+sgp4>=2.20
+numpy>=1.26
+astropy>=5.0
+pillow>=9.0

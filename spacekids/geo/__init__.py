@@ -1,0 +1,1 @@
+"""Space Kids geo package."""
