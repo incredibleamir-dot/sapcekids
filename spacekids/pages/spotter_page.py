@@ -28,16 +28,6 @@ class _Bridge(QObject):
     tle_ready = Signal(object, str)
 
 
-def _positions(src, is_tle, jd_start, dur_s, n):
-    """ECI positions sampled across the track window."""
-    if is_tle:
-        return satellites.track_positions_sgp4(src, jd_start, dur_s, n)
-    pts = np.empty((n, 3))
-    for i in range(n):
-        pts[i] = src.state_at(dur_s * i / max(1, n - 1))[0]
-    return pts
-
-
 class SpotterPage(PageBase):
     def __init__(self, parent=None):
         super().__init__(
@@ -49,6 +39,7 @@ class SpotterPage(PageBase):
         self._bridge.tle_ready.connect(self._on_tle)
         self._live = None          # dict: name, prop, source
         self._off_s = 0.0
+        self._track_start = 0.0    # sim-offset where the drawn track begins
         self._playing = False
         self._period = satellites.CATALOG[0].period_s
         self._jd_now = julian_date(datetime.datetime.utcnow())
@@ -157,8 +148,23 @@ class SpotterPage(PageBase):
             self._refresh_all()
 
     # ---------------------------------------------------------------- compute
+    def _track_pts(self, src, is_tle, dur, start_s):
+        """ECI positions of the ground-track window that begins ``start_s``
+        seconds after page start (0 for the fresh track, ``_track_start``
+        when a finished lap rolls the window forward)."""
+        n = 400
+        if is_tle:
+            return satellites.track_positions_sgp4(
+                src, self._jd_now + start_s / 86400.0, dur, n)
+        step = dur / (n - 1)
+        pts = np.empty((n, 3))
+        for i in range(n):
+            pts[i] = src.state_at(start_s + step * i)[0]
+        return pts
+
     def _refresh_all(self):
         self._off_s = 0.0
+        self._track_start = 0.0
         self._playing = False
         self.playbar.set_playing(False)
         kind, src = self._current()
@@ -166,9 +172,16 @@ class SpotterPage(PageBase):
 
         dur = 200 * 60.0 if is_tle else src.period_s * 1.5
         self._period = dur
-        pts = _positions(src, is_tle, self._jd_now, dur, n=400)
+        pts = self._track_pts(src, is_tle, dur, 0.0)
         self._draw_track(pts, dur)
         self._refresh_passes()
+
+    def _redraw_track(self, src, is_tle):
+        """Recompute the ground track for the window starting right at the
+        current marker position and repaint the map (used each finished lap)."""
+        dur = self._period
+        pts = self._track_pts(src, is_tle, dur, self._track_start)
+        self._draw_track(pts, dur)
 
     def refresh_theme(self):
         super().refresh_theme()
@@ -182,7 +195,8 @@ class SpotterPage(PageBase):
         lats = np.zeros(n)
         lons = np.zeros(n)
         for i in range(n):
-            jd = self._jd_now + dur * i / max(1, n - 1) / 86400.0
+            jd = self._jd_now + (self._track_start + dur * i /
+                                 max(1, n - 1)) / 86400.0
             la, lo = subpoint(pts[i], jd)
             lats[i], lons[i] = la, lo
         self.map.clear()
@@ -247,8 +261,14 @@ class SpotterPage(PageBase):
         if self._playing:
             self._off_s += (self.playbar.speed.currentData()
                             * self._period / 900.0)
-            if self._off_s > self._period * 1.5:
-                self._off_s -= self._period * 1.5
+            kind, src = self._current()
+            is_tle = self._is_tle(kind)
+            # once the marker has travelled the whole drawn ground track
+            # (end of the line on the map), recompute the track from there
+            # and redraw, keeping the line advancing start-to-end.
+            while self._off_s - self._track_start >= self._period:
+                self._track_start += self._period
+                self._redraw_track(src, is_tle)
 
         kind, src = self._current()
         is_tle = self._is_tle(kind)
