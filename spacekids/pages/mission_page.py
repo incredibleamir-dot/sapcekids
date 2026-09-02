@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QLabel, QPushButton, QSlider
 from .. import theme
 from ..astro import bodies, mission
 from ..astro.core import fmt_date
-from ..views.spaceview import Body, SpaceView
+from ..views.orbital3d import Body, make_orbital_view
 from ..widgets import DatePicker, Panel, PlayBar, SliderRow, StatBox
 from .base import PageBase
 
@@ -78,7 +78,7 @@ class MissionPage(PageBase):
         lay.addWidget(self.progress)
 
         exp = Panel(title="Experiment lab")
-        self.s_exp = SliderRow("Days in flight", 160, 351, 260, step=8,
+        self.s_exp = SliderRow("Time of flight (TOF)", 160, 351, 260, step=8,
                                suffix=" d")
         self.s_exp.valueChanged.connect(self._on_exp)
         b_exp = QPushButton("Best window")
@@ -88,8 +88,8 @@ class MissionPage(PageBase):
         self.controls.addWidget(exp)
 
         stats = Panel(title="Mission report")
-        self.st_days = StatBox("days of coasting")
-        self.st_dv = StatBox("total rocket power (km/s)")
+        self.st_days = StatBox("TOF (days)")
+        self.st_dv = StatBox("delta-v \u0394v (km/s)")
         self.st_arr = StatBox("arrival")
         self.st_best = StatBox("best launch day in this window")
         for w in (self.st_days, self.st_dv, self.st_arr, self.st_best):
@@ -102,7 +102,7 @@ class MissionPage(PageBase):
         self.controls.addWidget(self.fact)
 
     def _build_canvas(self):
-        self.view = SpaceView()
+        self.view = make_orbital_view()
         self.view.dt = self._base_dt
         self.add_canvas(self.view)
 
@@ -153,9 +153,9 @@ class MissionPage(PageBase):
             self.st_best.set_value(fmt_date(self._best.launch_jd))
 
         if plan.dv_total < 7.0:
-            word, kind = "Mars is close - good window!", "ok"
+            word, kind = "Good window - low \u0394v. Mars is close!", "ok"
         elif plan.dv_total < 13.0:
-            word, kind = "It will take a big rocket!", "warn"
+            word, kind = "High \u0394v - it will take a big rocket!", "warn"
         else:
             word = "Mars is far away today"
             if self._best and self._best.ok \
@@ -166,7 +166,7 @@ class MissionPage(PageBase):
 
         if mode == "exp":
             self.status(
-                "experiment: %d days of flight needs %.1f km/s"
+                "experiment: %d days TOF needs %.1f km/s \u0394v"
                 % (round(plan.tof_days), plan.dv_total), kind)
         else:
             self.status(word, kind)
@@ -247,7 +247,7 @@ class MissionPage(PageBase):
                                   ts)
             keep.append(dict(points=pts, color=theme.C_TRAIL, width=1.4,
                              name="trail"))
-        self.view.paths = keep
+        self.view.set_paths(keep)
 
     def _on_movie_tick(self):
         if not self._plan or not self._plan.ok:

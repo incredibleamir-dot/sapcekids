@@ -54,7 +54,7 @@ class GnssPage(PageBase):
 
     # ------------------------------------------------------------------- ui
     def _build_controls(self):
-        box, lay = self.add_group("Satellite fleet")
+        box, lay = self.add_group("Constellation (fleet)")
 
         lay.addWidget(QLabel("Constellation"))
         self.fleet = QComboBox()
@@ -77,7 +77,7 @@ class GnssPage(PageBase):
         self.place.currentIndexChanged.connect(self._refresh_all)
         lay2.addWidget(self.place)
 
-        self.s_mask = SliderRow("See it above", 5, 30, 10, step=1,
+        self.s_mask = SliderRow("Min elevation mask", 5, 30, 10, step=1,
                                 suffix=" deg")
         self.s_mask.valueChanged.connect(self._refresh_all)
         lay2.addWidget(self.s_mask)

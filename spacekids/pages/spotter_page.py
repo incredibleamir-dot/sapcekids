@@ -71,7 +71,7 @@ class SpotterPage(PageBase):
         self.city.currentIndexChanged.connect(self._refresh_all)
         lay.addWidget(self.city)
 
-        self.s_horizon = SliderRow("See it above", 5, 30, 10, step=1,
+        self.s_horizon = SliderRow("Min elevation mask", 5, 30, 10, step=1,
                                    suffix=" deg")
         self.s_horizon.valueChanged.connect(self._refresh_all)
         lay.addWidget(self.s_horizon)
@@ -88,7 +88,7 @@ class SpotterPage(PageBase):
         passes = Panel(title="Next passes over my town")
         self.table = QTableWidget(0, 4)
         self.table.setHorizontalHeaderLabels(
-            ["Starts", "Greatest height", "Ends", "Minutes"])
+            ["Rise (UTC)", "Max elevation", "Set (UTC)", "Duration"])
         self.table.horizontalHeader().setSectionResizeMode(
             QHeaderView.Stretch)
         self.table.verticalHeader().setVisible(False)

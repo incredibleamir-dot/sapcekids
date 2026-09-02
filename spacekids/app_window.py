@@ -12,8 +12,10 @@ from .pages.asteroid_page import AsteroidPage
 from .pages.gnss_page import GnssPage
 from .pages.mission_page import MissionPage
 from .pages.orbitlab_page import OrbitLabPage
+from .pages.porkchop_page import PorkchopPage
 from .pages.settings_page import SettingsPage
 from .pages.spotter_page import SpotterPage
+from .pages.transfer_page import TransferStudyPage
 
 TABS = [
     ("mission", "Rocket to Mars", "plan a Hohmann transfer to the Red Planet"),
@@ -21,6 +23,8 @@ TABS = [
     ("asteroid", "Catch the Asteroid", "intercept a real NEO"),
     ("spotter", "ISS Spotter", "track satellites and find passes over town"),
     ("gnss", "Constellation Lab", "GPS, GLONASS & BeiDou over your places"),
+    ("porkchop", "Porkchop Plot", "launch window contours of C3 and delta-v"),
+    ("transfer", "Transfer Study", "compare Hohmann & Lambert transfer costs"),
     ("settings", "Settings", "themes, my places and scene tuning"),
 ]
 
@@ -76,6 +80,8 @@ class MainWindow(QMainWindow):
             "asteroid": AsteroidPage(),
             "spotter": SpotterPage(),
             "gnss": GnssPage(),
+            "porkchop": PorkchopPage(),
+            "transfer": TransferStudyPage(),
             "settings": SettingsPage(),
         }
         for key, label, tip in TABS:

@@ -119,7 +119,7 @@ def test_gui_pages_build():
 
     app = QApplication.instance() or QApplication([])
     win = MainWindow()
-    assert win.tabs.count() == 6, win.tabs.count()
+    assert win.tabs.count() == 8, win.tabs.count()
     win.pages["mission"].replan()
     win.pages["asteroid"].replan()
     win.pages["orbit"].rebuild()

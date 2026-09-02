@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QComboBox, QLabel, QPushButton, QSlider
 from .. import theme
 from ..astro import asteroids, bodies
 from ..astro.core import fmt_date, julian_date
-from ..views.spaceview import Body, SpaceView
+from ..views.orbital3d import Body, make_orbital_view
 from ..widgets import DatePicker, Panel, PlayBar, SliderRow, StatBox
 from .base import PageBase
 
@@ -87,8 +87,8 @@ class AsteroidPage(PageBase):
         lay.addWidget(self.progress)
 
         stats = Panel(title="Defence brief")
-        self.st_tof = StatBox("days of flight")
-        self.st_dv = StatBox("rocket power needed (km/s)")
+        self.st_tof = StatBox("TOF (days)")
+        self.st_dv = StatBox("delta-v \u0394v (km/s)")
         self.st_arr = StatBox("intercepted on")
         self.st_dia = StatBox("asteroid size")
         for w in (self.st_tof, self.st_dv, self.st_arr, self.st_dia):
@@ -96,7 +96,7 @@ class AsteroidPage(PageBase):
         self.controls.addWidget(stats)
 
         exp = Panel(title="Experiment lab")
-        self.s_exp = SliderRow("Days in flight", 40, 400, 220, step=10,
+        self.s_exp = SliderRow("Time of flight (TOF)", 40, 400, 220, step=10,
                                suffix=" d")
         self.s_exp.valueChanged.connect(self._on_exp)
         b_exp = QPushButton("Best plan")
@@ -110,7 +110,7 @@ class AsteroidPage(PageBase):
         self._refresh_fact()
 
     def _build_canvas(self):
-        self.view = SpaceView()
+        self.view = make_orbital_view()
         self.view.dt = self._base_dt
         self.add_canvas(self.view)
 
@@ -167,7 +167,7 @@ class AsteroidPage(PageBase):
             ("warn" if plan.dv_total >= 9.0 else "ok")
         if mode == "exp":
             self.status(
-                "experiment: %d days of flight needs %.1f km/s (%s)"
+                "experiment: %d days TOF needs %.1f km/s \u0394v (%s)"
                 % (round(plan.tof_days), plan.dv_total, plan.result_word()),
                 kind)
         else:
@@ -250,7 +250,7 @@ class AsteroidPage(PageBase):
                                   np.asarray(self._plan.v0, dtype=float), ts)
             keep.append(dict(points=pts, color=theme.C_TRAIL, width=1.4,
                              name="trail"))
-        self.view.paths = keep
+        self.view.set_paths(keep)
 
     def _on_movie_tick(self):
         if not self._plan or not self._plan.ok:

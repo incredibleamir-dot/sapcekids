@@ -211,7 +211,7 @@ class SpaceView(QWidget):
         self.update()
 
     def set_scene(self, paths, bodies, center=(0.0, 0.0), title="",
-                  subtitle="", min_radius_km=0.0):
+                  subtitle="", min_radius_km=0.0, view_axis=None):
         self.paths = paths or []
         self.bodies = bodies or []
         self.center = center
@@ -219,6 +219,12 @@ class SpaceView(QWidget):
         self.subtitle = subtitle
         self.min_radius_km = min_radius_km
         self.t = 0.0
+        self._needs_extent = True
+        self.update()
+
+    def set_paths(self, paths):
+        """Replace just the path list (kept for parity with OrbitalView3D)."""
+        self.paths = paths or []
         self._needs_extent = True
         self.update()
 

@@ -6,6 +6,7 @@ Earth, live numbers (period, speeds, orbit family) and a ground-track map.
 
 import datetime
 
+import numpy as np
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QComboBox, QLabel
 
@@ -14,7 +15,7 @@ from ..astro import orbitlab
 from ..astro.core import julian_date
 from ..geo.earth import subpoint
 from ..geo.mapview import MapView
-from ..views.spaceview import Body, SpaceView
+from ..views.orbital3d import Body, make_orbital_view
 from ..widgets import Panel, PlayBar, SliderRow, StatBox
 from .base import PageBase
 
@@ -48,14 +49,13 @@ class OrbitLabPage(PageBase):
         self.preset.currentTextChanged.connect(self._apply_preset)
         lay.addWidget(self.preset)
 
-        self.s_peri = SliderRow("Lowest point", 100, 35790, 407, step=10,
+        self.s_peri = SliderRow("Periapsis altitude", 100, 35790, 407, step=10,
                                 suffix=" km")
-        self.s_apo = SliderRow("Highest point", 400, 60000, 417, step=50,
+        self.s_apo = SliderRow("Apoapsis altitude", 400, 60000, 417, step=50,
                                suffix=" km")
-        self.s_inc = SliderRow("Tilt", 0, 90, 51.6, step=0.5, suffix=" deg",
-                               decimals=1)
-        self.s_raan = SliderRow("Turn (RAAN)", 0, 360, 0, step=1,
-                                suffix=" deg")
+        self.s_inc = SliderRow("Inclination (INC)", 0, 90, 51.6, step=0.5,
+                               suffix=" deg", decimals=1)
+        self.s_raan = SliderRow("RAAN", 0, 360, 0, step=1, suffix=" deg")
         for s in (self.s_peri, self.s_apo, self.s_inc, self.s_raan):
             lay.addWidget(s)
             s.valueChanged.connect(lambda _v: self.rebuild())
@@ -65,10 +65,10 @@ class OrbitLabPage(PageBase):
         lay.addWidget(self.playbar)
 
         stats = Panel(title="Orbit report")
-        self.st_period = StatBox("orbit period")
-        self.st_low = StatBox("speed at lowest point")
-        self.st_high = StatBox("speed at highest point")
-        self.st_type = StatBox("what kind of orbit")
+        self.st_period = StatBox("orbital period (min)")
+        self.st_low = StatBox("velocity @ periapsis (km/s)")
+        self.st_high = StatBox("velocity @ apoapsis (km/s)")
+        self.st_type = StatBox("orbit classification")
         for w in (self.st_period, self.st_low, self.st_high, self.st_type):
             stats.layout_box.addWidget(w)
         self.controls.addWidget(stats)
@@ -79,7 +79,7 @@ class OrbitLabPage(PageBase):
         self.controls.addWidget(self.fact)
 
     def _build_canvas(self):
-        self.view = SpaceView()
+        self.view = make_orbital_view()
         self.add_canvas(self.view)
         self.view.dt = 60.0
         self.map = MapView()
@@ -120,16 +120,31 @@ class OrbitLabPage(PageBase):
         pts = sample_elements(d.k, d.a_km, d.e, d.inc_deg, d.raan_deg,
                               d.argp_deg, n=400)
 
+        # Kid-friendly exaggeration: draw the planet well *inside* the orbit
+        # so the fly ring reads as a clean circle instead of hugging a giant
+        # sphere.  The orbit itself is still drawn at true scale.
+        rp = d.rp_km
+        earth_visual = min(0.55 * rp, orbitlab.RE)
+
+        # Look straight down the orbit's angular-momentum axis so a circular
+        # orbit renders as a clean circle (not a foreshortened ellipse).
+        p0 = d.state_at(0.0)[0]
+        p1 = d.state_at(d.period_s / 4.0)[0]
+        p2 = d.state_at(d.period_s / 2.0)[0]
+        normal = np.cross(np.asarray(p1) - np.asarray(p0),
+                          np.asarray(p2) - np.asarray(p0))
+
         self.view.set_scene(
             [dict(points=pts, color=theme.C_SAT, width=1.8)],
             [Body(self._sat_position, 60.0, theme.C_SAT, "My satellite",
                   glow=0.6),
-             Body(lambda _t: (0.0, 0.0, 0.0), 6371.0, theme.C_EARTH,
+             Body(lambda _t: (0.0, 0.0, 0.0), earth_visual, theme.C_EARTH,
                   "Earth", glow=0.8)],
             center=(0.0, 0.0),
             title="My orbit around Earth",
             subtitle="top-down view (Earth at the centre)",
-            min_radius_km=d.a_km * (1.0 + d.e) * 1.08)
+            min_radius_km=d.a_km * (1.0 + d.e) * 1.08,
+            view_axis=normal)
         self.view.dt = d.period_s / 900.0 * self.playbar.speed.currentData()
 
     def _sat_position(self, t):

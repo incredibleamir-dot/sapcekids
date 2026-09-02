@@ -367,10 +367,10 @@ class TestMainWindow(unittest.TestCase):
         with isolated_env(), no_network():
             from spacekids.app_window import APP_NAME, MainWindow, TABS
             win = MainWindow()
-            self.assertEqual(win.tabs.count(), 6)
+            self.assertEqual(win.tabs.count(), 8)
             self.assertEqual(list(win.pages), [t[0] for t in TABS])
             self.assertIn(APP_NAME, win.windowTitle())
-            self.assertEqual(len(win._tb_actions), 6)
+            self.assertEqual(len(win._tb_actions), 8)
             for i in range(win.tabs.count()):
                 win.tabs.setCurrentIndex(i)
                 pump()

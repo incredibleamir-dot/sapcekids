@@ -1,10 +1,11 @@
 # Space Kids 🚀
 
 A playful orbital-mechanics playground for young explorers, built on
-**PySide6** and **poliastro**. Pick a launch day, fly a transfer to Mars,
-intercept a real asteroid, watch the ISS pass over your town, or figure out
-which GPS satellites can "see" your house right now — with real physics
-underneath every frame.
+**PySide6** with **PyVista** interactive 3-D orbital scenes and
+**Matplotlib** charts. Pick a launch day, fly a transfer to Mars, intercept a
+real asteroid, look for launch windows with a porkchop plot, watch the ISS
+pass over your town, or figure out which GPS satellites can "see" your house
+right now — with real physics underneath every frame.
 
 ![platform](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![gui](https://img.shields.io/badge/GUI-PySide6-informational)
@@ -13,7 +14,9 @@ underneath every frame.
 
 ## Screenshots
 
-The six tabs, rendered in the default *Space Night* theme.
+The eight tabs, rendered in the default *Space Night* theme. Mission, orbit,
+asteroid, porkchop and transfer pages show their interactive **PyVista 3-D** view;
+porkchop and transfer also show their **Matplotlib** charts below it.
 
 <table>
 <tr>
@@ -28,11 +31,20 @@ The six tabs, rendered in the default *Space Night* theme.
   <td><img src="docs/screenshots/05-constellation-lab.png" width="520" alt="Constellation Lab"></td>
   <td><img src="docs/screenshots/06-settings.png" width="520" alt="Settings"></td>
 </tr>
+<tr>
+  <td><img src="docs/screenshots/07-porkchop-plot.png" width="520" alt="Porkchop Plot"></td>
+  <td><img src="docs/screenshots/08-transfer-study.png" width="520" alt="Transfer Study"></td>
+</tr>
 </table>
+
+> Headless/CI note: PyVista needs a real OpenGL context. Under
+> `QT_QPA_PLATFORM=offscreen` (or `SPACEKIDS_FORCE_2D=1`) the pages
+> automatically fall back to the 2-D `SpaceView`, so the app, the test suite
+> and screenshots all work without a GPU.
 
 ---
 
-## The six activities
+## The eight activities
 
 1. **Rocket to Mars** — plan a Hohmann-style transfer to the Red Planet. Pick a
    launch day on the calendar and watch the *launch window* come alive: some
@@ -40,12 +52,14 @@ The six tabs, rendered in the default *Space Night* theme.
    trip costs a fortune in fuel. A "days in flight" experiment slider shows the
    trade-off between trip time and rocket size.
 2. **Build My Satellite** — start from a famous orbit (ISS, GPS, weather
-   satellites) or design your own with sliders for lowest point, highest
-   point, tilt and spin. Read off a real orbit report (period, speed at
-   perigee/apogee) and watch the ground track sweep across the world map.
+   satellites) or design your own with sliders for periapsis, apoapsis,
+   inclination (INC) and RAAN. Read off a real orbit report (period, speed at
+   periapsis/apoapsis) and watch the ground track sweep across the world map.
+   The camera looks straight down the orbit so a circular orbit reads as a
+   circle, and the planet is drawn small enough that the fly ring stands out.
 3. **Catch the Asteroid** — chase a real near-Earth asteroid. The app
-   computes a Lambert intercept from today, draws the chase in the 3-D top
-   view, and lets you trade flight time for fuel with the experiment slider.
+   computes a Lambert intercept from today, draws the chase in the 3-D view,
+   and lets you trade flight time for fuel with the experiment slider.
 4. **ISS Spotter** — where is the space station right now? Live TLE elements
    are fetched from CelesTrak when online and propagated with proper **SGP4**;
    offline, an embedded catalog keeps working. See the ground track and a
@@ -53,12 +67,23 @@ The six tabs, rendered in the default *Space Night* theme.
 5. **Constellation Lab** — the GPS, GLONASS and BeiDou fleets painted over the
    world. Pick a place and a horizon mask and see exactly which navigation
    satellites are high enough to give it a fix — the same job your phone does.
-6. **Settings** — five click-applied colour themes (Space Night, Rainbow Kids,
+6. **Porkchop Plot** — pick any of the **eight planets or the Moon**, choose a
+   launch window, and get a NASA-style *porkchop plot*: filled contours of C3
+   (energy) against launch date and time-of-flight. The best window is picked
+   for you and its transfer is flown in the 3-D view beside the chart.
+7. **Transfer Study** — compare the textbook **Hohmann** baseline with real
+   **Lambert** solutions for any of the eight planets or the Moon. A delta-v
+   vs flight-time cost curve sits below the 3-D orbit so you can match the
+   numbers to the shape of the trajectory.
+8. **Settings** — five click-applied colour themes (Space Night, Rainbow Kids,
    Sunny Day, Moonlight, Aurora), a persistent *My places* manager, how many
    stars the space scenes draw, and the default movie speed.
 
 Every scene supports **wheel zoom (centred on your mouse)**, **drag to pan**,
-double-click/`0`/`R` to reset, and a play bar with 1×–30× speed.
+double-click/`0`/`R` to reset, and a play bar with 1×–30× speed. The mission,
+orbit, asteroid, porkchop and transfer pages render their scene in
+interactive **3-D** (PyVista); spotter and constellation keep the 2-D world
+map because they track satellites over the Earth.
 
 ---
 
@@ -66,8 +91,12 @@ double-click/`0`/`R` to reset, and a play bar with 1×–30× speed.
 
 - Python **3.11+** (developed and tested on 3.13)
 - `PySide6`, `poliastro`, `sgp4`, `numpy`, `astropy`, `pillow`
+- `pyvista` + `pyvistaqt` (interactive 3-D orbital views), `matplotlib` (charts)
 
 Internet is optional — it is only used to refresh the live ISS TLE elements.
+
+3-D needs a working OpenGL context on a real display; on headless/CI machines
+the app automatically uses its 2-D fallback view instead.
 
 > **Note on poliastro:** on Python 3.11+ pip resolves `poliastro 0.7.0` (the
 > newest release whose metadata resolves cleanly on modern interpreters). It
@@ -98,10 +127,10 @@ On Linux/macOS you may also need the Qt system libraries (e.g.
 
 | Control | Action |
 | --- | --- |
-| `Alt+1` … `Alt+6` | switch tabs |
+| `Alt+1` … `Alt+8` | switch tabs |
 | Mouse wheel | zoom in/out (towards the cursor) |
 | `+` / `-` / `0` / `R` | zoom in / out / reset |
-| Drag (left button) | pan the space scene or the world map |
+| Drag (left button) | pan / rotate the space scene or the world map |
 | Double-click | reset zoom + pan |
 | `F1` | About box |
 | `F11` | toggle fullscreen |
@@ -145,23 +174,25 @@ The smoke suite is dependency-light and covers:
 - orbit-design numbers; SGP4 parse/propagate; pass finding
 - asteroid intercept; mission `plan_at_tof`
 - constellation sizes, GEO-slot stability and place visibility
+- porkchop grids + best-window picking; transfer cost curves (all 8 planets + Moon)
 - locations persistence; settings persistence; theme switching
-- GUI: all six pages build, replans run, map view renders
+- GUI: all eight pages build, replans run, map view renders
 
 The full suite adds exhaustive edge cases across:
 
 - **Physics** (`tests/test_astro.py`) — poliastro-on/-off branches; Kepler
   `nu↔M` round-trips, near-parabolic and hyperbolic orbits; Hohmann/Lambert
   consistency; mission plan lengths and dv trade-offs; orbit-design validity;
-  asteroid intercept; GPS/GLONASS/BeiDou constellations and GEO-slot stability;
-  SGP4 parse/propagate bounds; live-fetch failure paths.
+  asteroid intercept; porkchop and lunar transfers; GPS/GLONASS/BeiDou
+  constellations and GEO-slot stability; SGP4 parse/propagate bounds;
+  live-fetch failure paths.
 - **Geo** (`tests/test_geo.py`) — sub-satellite points, elevation/ground
   distance, land-raster properties, and places add/update/remove/validation
   plus corrupt-JSON recovery.
 - **Settings & theme** (`tests/test_settings_theme.py`) — persistence, reset,
   corrupt files, type filtering, palette completeness, and live switching.
 - **GUI** (`tests/test_gui.py`) — every reusable widget, zoom/pan anchor
-  invariants on both views, the six pages, theme persistence + restyle,
+  invariants on both views, all eight pages, theme persistence + restyle,
   add/remove places through the real settings UI, and spotter marker logic.
 
 ---
@@ -173,6 +204,8 @@ spacekids/
 ├── main.py                  # entry point: picks the saved theme, then starts the GUI
 ├── requirements.txt
 ├── LICENSE                  # MIT
+├── tools/
+│   └── shoot_screenshots.py # render each tab and save docs/screenshots PNGs
 └── tests/
     ├── smoke.py             # dependency-light smoke suite
     ├── helpers.py           # env isolation, offscreen app, window teardown
@@ -195,8 +228,13 @@ spacekids/
     │   ├── asteroid_page.py # Catch the Asteroid
     │   ├── spotter_page.py  # ISS Spotter
     │   ├── gnss_page.py     # Constellation Lab
+    │   ├── porkchop_page.py # Porkchop Plot
+    │   ├── transfer_page.py # Transfer Study
     │   └── settings_page.py # Settings
-    ├── views/spaceview.py   # top-down orbital scene painter (QPainter only)
+    ├── views/
+    │   ├── spaceview.py     # top-down orbital scene painter (QPainter 2-D fallback)
+    │   ├── orbital3d.py     # interactive PyVista 3-D orbital viewer (OrbitalView3D)
+    │   └── mplchart.py      # theme-aware Matplotlib canvas widget
     ├── geo/                 # Earth, maps and places
     │   ├── earth.py         # sub-satellite points, elevation, great circles
     │   ├── mapview.py       # equirectangular world map widget
@@ -205,9 +243,11 @@ spacekids/
     └── astro/               # the physics
         ├── core.py          # thin poliastro facade (Orbit, Izzo Lambert, dates)
         ├── kepler.py        # pure-kepler propagation / orbit math fallback
-        ├── bodies.py        # planets + Sun (mean elements)
+        ├── bodies.py        # Sun + all 8 planets + Moon (mean elements)
         ├── mission.py       # Hohmann & Lambert mission planning
         ├── orbitlab.py      # orbit design + ground tracks
+        ├── porkchop.py      # C3 / delta-v grid + best-window picking
+        ├── transfer.py      # Hohmann baseline + delta-v-vs-TOF sweeps
         ├── asteroids.py     # NEO catalog + intercept planning
         ├── constellations.py# GPS / GLONASS / BeiDou toy fleets
         └── satellites.py    # satellite catalog + live SGP4 TLE + pass finding
@@ -217,10 +257,12 @@ spacekids/
 
 ## How the pieces talk to each other
 
-- **Pages** never touch `QPainter`. They describe a scene — a list of
-  polylines and moving `Body` objects — and hand it to `SpaceView`, or add
-  tracks/points to a `MapView`. The views own all the drawing, zooming and
-  panning.
+- **Pages never touch a renderer.** They describe a scene — a list of
+  polylines and moving `Body` objects — and hand it to a view. On a display
+  with OpenGL that view is the interactive **PyVista 3-D** `OrbitalView3D`; on
+  headless/CI it is the identical-API 2-D `SpaceView`. World-map pages hand
+  tracks/points to a `MapView`. The views own all drawing, zooming and panning,
+  and `make_orbital_view()` picks the right one for the environment.
 - **`theme.py` is live.** Modules read `theme.BG`, `theme.C_MARS`, … through a
   module-level attribute hook that forwards to the *active* palette. Switching
   themes in Settings re-styles the whole app instantly — the global stylesheet
@@ -251,10 +293,19 @@ enough contrast for `ACCENT_TEXT`.
 - Asteroid orbital phases are **illustrative**: the app uses textbook mean
   elements, and the intercept is a patched two-body Lambert solution, not a
   full numerical solar-system integration.
+- Planet and Moon positions use **JPL mean orbital elements** propagated with
+  the Kepler solver — accurate to a fraction of a degree over years, but not a
+  high-precision ephemeris.
+- The **lunar transfer** is a patched two-body model (low Earth parking orbit
+  to lunar distance under Earth's gravity), not a full Moon mission design;
+  the classical Hohmann value (~5 days, ~4 km/s) is the trusty baseline.
 - The world map is a stylised 1-degree equirectangular land raster, used for
   ground tracks and fleet footprints — not a survey-grade projection.
 - Pass times from the offline catalog are approximate; the live SGP4 TLE path
   (when online) is the accurate one.
+- Screenshots show the deterministic 2-D fallback scenes (so they build in
+  CI); a machine with a working OpenGL context shows the same scenes
+  interactively in 3-D.
 
 ---
 

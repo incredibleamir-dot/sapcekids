@@ -293,6 +293,18 @@ class SliderRow(QWidget):
         self._slider.setValue(max(0, min(self._count(), i)))
         self._render(self.value())
 
+    def set_range(self, vmin, vmax, step=None, suffix=None, value=None):
+        """Replace the slider's min/max/step (keeping the current value)."""
+        old = self.value()
+        self._min = float(vmin)
+        self._max = float(vmax)
+        if step is not None:
+            self._step = float(step)
+        if suffix is not None:
+            self._suffix = suffix
+        self._slider.setRange(0, self._count())
+        self.set_value(value if value is not None else old)
+
     def slider(self):
         return self._slider
 

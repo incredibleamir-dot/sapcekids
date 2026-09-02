@@ -1,6 +1,7 @@
-"""PageBase: shared chrome for the four mission pages.
+"""PageBase: shared chrome for all mission pages.
 
-Left column = kid controls in a scroll area; right column = the canvas.
+Left column = kid controls in a scroll area; right column = the canvas
+(may include a primary 3-D view *and* a smaller chart panel below).
 A header strip carries the mission title, a short subtitle and a status pill.
 """
 
@@ -118,6 +119,11 @@ class PageBase(QWidget):
     def add_static(self, widget):
         widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self._canvas_lay.addWidget(widget, 0)
+
+    def add_chart(self, widget, stretch=1):
+        """Add a chart (e.g. MplChart) below the main canvas widget."""
+        widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self._canvas_lay.addWidget(widget, stretch)
 
     def busytip(self, text):
         lbl = QLabel(text)

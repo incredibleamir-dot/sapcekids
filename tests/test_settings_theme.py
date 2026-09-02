@@ -132,10 +132,11 @@ class TestTheme(unittest.TestCase):
         self.assertEqual(theme.active_name(), before)
 
     def test_set_active_same_is_noop(self):
-        theme.set_active(theme.active_name(), persist=False)
+        # force a known baseline so this test is robust to ordering
+        theme.set_active("Space Night", persist=False)
         fired = []
         theme.on_change(lambda: fired.append(1))
-        theme.set_active(theme.active_name(), persist=False)
+        theme.set_active("Space Night", persist=False)
         self.assertEqual(fired, [])
         theme.set_active("Aurora", persist=False)
         self.assertEqual(fired, [1])
